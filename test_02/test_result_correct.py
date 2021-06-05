@@ -17,9 +17,10 @@ def make_test_mongo():
 @pytest.fixture(scope="session", autouse=True)
 def set_up_test_mongo_and_tear_down(request):
     mongo = make_test_mongo()
-    fnames = os.listdir('fixture_data')
+    fixture_dir = os.path.join(os.path.dirname(__file__), 'fixture_data')
+    fnames = os.listdir(os.path.join(os.path.dirname(__file__), 'fixture_data'))
     for fname in fnames:
-        fpath = os.path.join('fixture_data', fname)
+        fpath = os.path.join(fixture_dir, fname)
         with open(fpath, 'r') as f:
             entries = loads(f.read())
             coll = fname.split(".")[0]
@@ -39,4 +40,4 @@ def client():
 
 def test_call_view_function(client):
     result = client.get('list_client_user/58884ff19c5d396319ef9c09')
-    assert hashlib.sha224(result.data).hexdigest() == "f470e6eba2bfd699be6d5abb481fe10f73e26cf2db6b7e3fcca0bc2a"
+    assert hashlib.sha224(result.data).hexdigest() == "7203ebd74df5402adf4a28cdb59410e25f5754c5864217b995ede1e7"
