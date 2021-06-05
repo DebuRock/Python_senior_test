@@ -64,9 +64,11 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
 
     # Go over client_users list and put whole dereferenced permissions, routes, routines structure under allowed actions
 
-    dereferenced_permissions = dict()
-    role_permission = list()
+    # dereferenced_permissions = dict()
+    # role_permission = list()
     for cu in client_users_list:
+        dereferenced_permissions = dict()
+        role_permission = list()
         allowed_actions = list()
         au = cu_api_user_map.get(cu['_id'])
         if not au:
@@ -82,7 +84,8 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
 
         for pid in permissions:
             if pid in dereferenced_permissions:
-                allowed_actions.append(dereferenced_permissions[pid])
+                # Causing The duplicate issue so commenting the line 89
+                # allowed_actions.append(dereferenced_permissions[pid])
                 continue
             p = permission_id_permission_map.get(pid)
             if not p:
@@ -95,7 +98,7 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
             p['ui_aliases'] = set()
             deref_routes = list()
             for r_id in p.get('routes', list()):
-                route = route_id_route_map[r_id]
+                route = route_id_route_map[r_id] if not isinstance(r_id, dict) else route_id_route_map[r_id.get('_id')]
                 deref_routes.append(route)
                 if 'ui_aliases' in route:
                     p['ui_aliases'].update(route['ui_aliases'])
