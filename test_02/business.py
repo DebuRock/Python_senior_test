@@ -35,6 +35,7 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
     cu_ids = [cu['_id'] for cu in client_users_list]
     api_users = mongo.api_users.find({'client_user': {'$in': cu_ids}})
 
+    # Permission is being duplicated
     permission_ids = list()
     cu_api_user_map = dict()
     for au in api_users:
@@ -59,8 +60,8 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
     # Extract all referenced routines
     relevant_permissions = list(mongo.permissions.find({'_id': {'$in': permission_ids}}))
     permission_id_permission_map = dict()
-    for p in relevant_permissions:
-        permission_id_permission_map[p['_id']] = p
+    for rel_permission in relevant_permissions:
+        permission_id_permission_map[rel_permission['_id']] = rel_permission
 
     # Go over client_users list and put whole dereferenced permissions, routes, routines structure under allowed actions
 
@@ -87,14 +88,16 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
                 # Causing The duplicate issue so commenting the line 89
                 # allowed_actions.append(dereferenced_permissions[pid])
                 continue
-            p = permission_id_permission_map.get(pid)
-            if not p:
+            perm_map = permission_id_permission_map.get(pid)
+            if not perm_map:
                 # Broken reference to permission object. Put an empty object there
-                p = {'_id': pid, 'routes': [], 'routines': [], 'error': 'Invalid reference', 'ui_aliases': []}
-                allowed_actions.append(p)
+                perm_map = {'_id': pid, 'routes': [], 'routines': [], 'error': 'Invalid reference', 'ui_aliases': []}
+                allowed_actions.append(perm_map)
                 continue
-            allowed_actions.append(p)
+            # allowed_actions.append(p)
             # Exctract ui_aliases (if any) from routes and propagate them up to permission level
+            # the same reference to the permission_id_permission_map causing the issue of mixed up
+            p = perm_map.copy()
             p['ui_aliases'] = set()
             deref_routes = list()
             for r_id in p.get('routes', list()):
@@ -111,6 +114,7 @@ def dereference_client_users_allowed_actions_for_client(client_users_list):
             p['routines'] = []
             p['ui_aliases'] = list(p['ui_aliases'])
             dereferenced_permissions[pid] = p
+            allowed_actions.append(p)
 
         allowed_actions.sort(key=lambda p: p.get('name', 'z'))
         cu['allowed_actions'] = allowed_actions
